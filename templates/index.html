@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Arbitrage Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        .opportunity-card {
+            transition: transform 0.2s;
+        }
+        .opportunity-card:hover {
+            transform: translateY(-5px);
+        }
+        .risk-score {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .risk-low { background-color: #28a745; }
+        .risk-medium { background-color: #ffc107; }
+        .risk-high { background-color: #dc3545; }
+        .stats-card {
+            background: linear-gradient(45deg, #2193b0, #6dd5ed);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Digital Arbitrage Dashboard</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Active Opportunities</h5>
+                        <h2 id="active-opportunities">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Profit</h5>
+                        <h2 id="total-profit">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Monitored Products</h5>
+                        <h2 id="monitored-products">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Last Update</h5>
+                        <h2 id="last-update">-</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Row -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Filters</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="min-profit" class="form-label">Min Profit ($)</label>
+                                <input type="number" class="form-control" id="min-profit" min="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="min-margin" class="form-label">Min Margin (%)</label>
+                                <input type="number" class="form-control" id="min-margin" min="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="max-risk" class="form-label">Max Risk Score</label>
+                                <input type="number" class="form-control" id="max-risk" min="0" max="1" step="0.1">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sort-by" class="form-label">Sort By</label>
+                                <select class="form-select" id="sort-by">
+                                    <option value="profit">Absolute Profit</option>
+                                    <option value="margin">Profit Margin</option>
+                                    <option value="risk">Risk Score</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opportunities Grid -->
+        <div class="row" id="opportunities-container">
+            <!-- Opportunities will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- Opportunity Card Template -->
+    <template id="opportunity-template">
+        <div class="col-md-4 mb-4 opportunity-card">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title product-name"></h5>
+                        <div class="risk-score"></div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Buy From</small>
+                                <p class="mb-0 target-marketplace"></p>
+                                <h4 class="target-price"></h4>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Sell On</small>
+                                <p class="mb-0 source-marketplace"></p>
+                                <h4 class="source-price"></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <small class="text-muted">Profit</small>
+                            <h4 class="absolute-profit"></h4>
+                        </div>
+                        <div>
+                            <small class="text-muted">Margin</small>
+                            <h4 class="profit-margin"></h4>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">Expires: <span class="expires-at"></span></small>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        // Connect to WebSocket
+        const socket = io();
+
+        // Initialize opportunities array
+        let opportunities = [];
+
+        // Listen for new opportunities
+        socket.on('new_opportunity', function(opportunity) {
+            opportunities.push(opportunity);
+            updateOpportunities();
+        });
+
+        // Function to format currency
+        function formatCurrency(amount, currency = 'USD') {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency
+            }).format(amount);
+        }
+
+        // Function to format date
+        function formatDate(isoString) {
+            return new Date(isoString).toLocaleString();
+        }
+
+        // Function to create opportunity card
+        function createOpportunityCard(opportunity) {
+            const template = document.getElementById('opportunity-template');
+            const card = template.content.cloneNode(true);
+
+            // Set risk score color
+            const riskScore = opportunity.risk_score;
+            const riskElement = card.querySelector('.risk-score');
+            riskElement.textContent = riskScore.toFixed(2);
+            if (riskScore < 0.3) {
+                riskElement.classList.add('risk-low');
+            } else if (riskScore < 0.7) {
+                riskElement.classList.add('risk-medium');
+            } else {
+                riskElement.classList.add('risk-high');
+            }
+
+            // Fill in the data
+            card.querySelector('.product-name').textContent = opportunity.product_name;
+            card.querySelector('.target-marketplace').textContent = opportunity.target_marketplace;
+            card.querySelector('.source-marketplace').textContent = opportunity.source_marketplace;
+            card.querySelector('.target-price').textContent = formatCurrency(opportunity.target_price.amount, opportunity.target_price.currency);
+            card.querySelector('.source-price').textContent = formatCurrency(opportunity.source_price.amount, opportunity.source_price.currency);
+            card.querySelector('.absolute-profit').textContent = formatCurrency(opportunity.absolute_profit);
+            card.querySelector('.profit-margin').textContent = opportunity.profit_margin.toFixed(2) + '%';
+            card.querySelector('.expires-at').textContent = formatDate(opportunity.expires_at);
+
+            return card;
+        }
+
+        // Function to update opportunities display
+        function updateOpportunities() {
+            const container = document.getElementById('opportunities-container');
+            container.innerHTML = '';
+
+            // Apply filters
+            const minProfit = parseFloat(document.getElementById('min-profit').value) || 0;
+            const minMargin = parseFloat(document.getElementById('min-margin').value) || 0;
+            const maxRisk = parseFloat(document.getElementById('max-risk').value) || 1;
+            const sortBy = document.getElementById('sort-by').value;
+
+            let filtered = opportunities.filter(opp => 
+                opp.absolute_profit >= minProfit &&
+                opp.profit_margin >= minMargin &&
+                opp.risk_score <= maxRisk
+            );
+
+            // Sort opportunities
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'profit':
+                        return b.absolute_profit - a.absolute_profit;
+                    case 'margin':
+                        return b.profit_margin - a.profit_margin;
+                    case 'risk':
+                        return a.risk_score - b.risk_score;
+                }
+            });
+
+            // Create and append cards
+            filtered.forEach(opportunity => {
+                container.appendChild(createOpportunityCard(opportunity));
+            });
+        }
+
+        // Function to update statistics
+        function updateStatistics() {
+            fetch('/api/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('active-opportunities').textContent = data.active_opportunities;
+                    document.getElementById('total-profit').textContent = formatCurrency(data.total_profit);
+                    document.getElementById('monitored-products').textContent = data.monitored_products;
+                    document.getElementById('last-update').textContent = new Date(data.last_update).toLocaleTimeString();
+                });
+        }
+
+        // Initial load of opportunities
+        fetch('/api/opportunities')
+            .then(response => response.json())
+            .then(data => {
+                opportunities = data;
+                updateOpportunities();
+            });
+
+        // Update statistics every minute
+        updateStatistics();
+        setInterval(updateStatistics, 60000);
+
+        // Add event listeners for filters
+        document.getElementById('min-profit').addEventListener('change', updateOpportunities);
+        document.getElementById('min-margin').addEventListener('change', updateOpportunities);
+        document.getElementById('max-risk').addEventListener('change', updateOpportunities);
+        document.getElementById('sort-by').addEventListener('change', updateOpportunities);
+    </script>
+</body>
+</html> 

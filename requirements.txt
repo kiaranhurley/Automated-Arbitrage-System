@@ -1,0 +1,51 @@
+# Web Scraping and API Integration
+requests==2.31.0
+beautifulsoup4==4.12.2
+selenium==4.18.1
+aiohttp==3.9.3
+playwright==1.42.0
+
+# Database and Storage
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.27
+alembic==1.13.1
+pandas==2.2.1
+
+# Web Framework and API
+flask==3.0.2
+flask-socketio==5.3.6
+flask-sqlalchemy==3.1.1
+flask-migrate==4.0.5
+gunicorn==21.2.0
+
+# Task Queue and Background Jobs
+celery==5.3.6
+redis==5.0.1
+
+# Notification Systems
+python-telegram-bot==20.8
+discord.py==2.3.2
+sendgrid==6.11.0
+
+# Data Analysis and Processing
+numpy==1.26.4
+scipy==1.12.0
+scikit-learn==1.4.1
+
+# Currency and Financial
+forex-python==1.8
+ccxt==4.2.15
+
+# Monitoring and Logging
+prometheus-client==0.20.0
+python-json-logger==2.0.7
+
+# Testing
+pytest==8.0.2
+pytest-asyncio==0.23.5
+
+# Development Tools
+python-dotenv==1.0.1
+black==24.2.0
+flake8==7.0.0
+mypy==1.8.0 
