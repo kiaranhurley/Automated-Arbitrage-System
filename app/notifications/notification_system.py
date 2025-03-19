@@ -9,8 +9,8 @@ from typing import Any, Dict, List
 import aiohttp
 import telegram
 
+from app.models.models import ArbitrageOpportunity, NotificationLog
 from config import NOTIFICATION_CONFIG
-from models import ArbitrageOpportunity, NotificationLog
 
 
 class NotificationSystem:

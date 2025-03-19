@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from models import Marketplace
+from app.models.models import Marketplace
 
 
 class FeeCalculator:

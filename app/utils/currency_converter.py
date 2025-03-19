@@ -4,8 +4,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.models.models import ExchangeRate
 from config import BASE_CURRENCY
-from models import ExchangeRate
 
 
 class CurrencyConverter:

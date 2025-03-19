@@ -6,8 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
+from app.models.models import PricePoint, Product
 from config import SCRAPING_CONFIG
-from models import PricePoint, Product
 
 
 class MarketplaceScraper(ABC):

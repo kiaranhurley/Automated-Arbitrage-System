@@ -21,6 +21,7 @@ gunicorn==21.2.0
 # Task Queue and Background Jobs
 celery==5.3.6
 redis==5.0.1
+apscheduler==3.10.4
 
 # Notification Systems
 python-telegram-bot==20.8
@@ -48,4 +49,4 @@ pytest-asyncio==0.23.5
 python-dotenv==1.0.1
 black==24.2.0
 flake8==7.0.0
-mypy==1.8.0 
+mypy==1.8.0

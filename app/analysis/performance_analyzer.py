@@ -6,7 +6,7 @@ import numpy as np
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from models import ArbitrageOpportunity, NotificationLog
+from app.models.models import ArbitrageOpportunity, NotificationLog
 
 
 class PerformanceAnalyzer:

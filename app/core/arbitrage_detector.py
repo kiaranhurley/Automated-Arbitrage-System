@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
+from app.models.models import (ArbitrageOpportunity, ExchangeRate, PricePoint,
+                               Product)
 from app.utils.currency_converter import CurrencyConverter
 from app.utils.fee_calculator import FeeCalculator
 from config import ARBITRAGE_CONFIG
-from models import ArbitrageOpportunity, ExchangeRate, PricePoint, Product
 
 
 class ArbitrageDetector:

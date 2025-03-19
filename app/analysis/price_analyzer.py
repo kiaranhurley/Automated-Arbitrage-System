@@ -8,7 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from models import PricePoint, Product
+from app.models.models import PricePoint, Product
 
 
 class PriceAnalyzer:

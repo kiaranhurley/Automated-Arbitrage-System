@@ -5,15 +5,15 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template
 from flask_socketio import SocketIO
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
-from arbitrage_detector import ArbitrageDetector
+from app.core.arbitrage_detector import ArbitrageDetector
+from app.marketplace.steam_scraper import SteamScraper
+from app.models.models import (ArbitrageOpportunity, Marketplace, PricePoint,
+                               Product, init_db)
+from app.notifications.notification_system import NotificationSystem
 from config import DATABASE_CONFIG, FLASK_CONFIG
-from models import (ArbitrageOpportunity, Marketplace, PricePoint, Product,
-                    init_db)
-from notification_system import NotificationSystem
-from steam_scraper import SteamScraper
 
 # Configure logging
 logging.basicConfig(

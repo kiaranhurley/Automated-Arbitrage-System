@@ -2,8 +2,8 @@ import json
 import re
 from urllib.parse import urljoin
 
+from app.marketplace.marketplace_scraper import MarketplaceScraper
 from config import STEAM_API_KEY
-from marketplace_scraper import MarketplaceScraper
 
 
 class SteamScraper(MarketplaceScraper):
