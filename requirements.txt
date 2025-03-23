@@ -31,7 +31,7 @@ sendgrid==6.11.0
 # Data Analysis and Processing
 numpy==1.26.4
 scipy==1.12.0
-scikit-learn==1.4.1
+scikit-learn>=1.4.0,<1.7.0
 
 # Currency and Financial
 forex-python==1.8

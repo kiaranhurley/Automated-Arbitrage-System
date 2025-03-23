@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import urllib.parse
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -28,7 +29,8 @@ app.config.update(FLASK_CONFIG)
 socketio = SocketIO(app)
 
 # Database setup
-db_url = f"postgresql://{DATABASE_CONFIG['default']['USER']}:{DATABASE_CONFIG['default']['PASSWORD']}@{DATABASE_CONFIG['default']['HOST']}:{DATABASE_CONFIG['default']['PORT']}/{DATABASE_CONFIG['default']['NAME']}"
+password = urllib.parse.quote_plus(DATABASE_CONFIG['default']['PASSWORD'])
+db_url = f"postgresql://{DATABASE_CONFIG['default']['USER']}:{password}@{DATABASE_CONFIG['default']['HOST']}:{DATABASE_CONFIG['default']['PORT']}/{DATABASE_CONFIG['default']['NAME']}"
 engine = create_engine(db_url)
 Session = sessionmaker(bind=engine)
 

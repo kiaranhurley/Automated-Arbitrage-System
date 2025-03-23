@@ -1,3 +1,4 @@
+import urllib.parse
 from datetime import datetime
 
 from sqlalchemy import (JSON, Boolean, Column, DateTime, Float, ForeignKey,
@@ -30,7 +31,7 @@ class Product(Base):
     identifier = Column(String(100), nullable=False, unique=True)
     description = Column(String(1000))
     category = Column(String(100))
-    metadata = Column(JSON)
+    product_metadata = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -91,7 +92,10 @@ class ExchangeRate(Base):
 
 def init_db():
     """Initialize the database with tables"""
-    db_url = f"postgresql://{DATABASE_CONFIG['default']['USER']}:{DATABASE_CONFIG['default']['PASSWORD']}@{DATABASE_CONFIG['default']['HOST']}:{DATABASE_CONFIG['default']['PORT']}/{DATABASE_CONFIG['default']['NAME']}"
+    # URL encode the password to handle special characters
+    password = urllib.parse.quote_plus(DATABASE_CONFIG['default']['PASSWORD'])
+    
+    db_url = f"postgresql://{DATABASE_CONFIG['default']['USER']}:{password}@{DATABASE_CONFIG['default']['HOST']}:{DATABASE_CONFIG['default']['PORT']}/{DATABASE_CONFIG['default']['NAME']}"
     engine = create_engine(db_url)
     Base.metadata.create_all(engine)
     return engine 
