@@ -110,85 +110,148 @@ class NotificationSystem:
 
     def _create_opportunity_html(self, opportunity: ArbitrageOpportunity) -> str:
         """Create HTML content for email notification"""
-        source_price = opportunity.source_price
-        target_price = opportunity.target_price
-        
-        return f"""
-        <html>
-            <body>
-                <h2>New Arbitrage Opportunity Detected</h2>
-                <p><strong>Product:</strong> {source_price.product.name}</p>
-                <p><strong>Profit Margin:</strong> {opportunity.profit_margin:.2f}%</p>
-                <p><strong>Absolute Profit:</strong> ${opportunity.absolute_profit:.2f}</p>
-                <p><strong>Risk Score:</strong> {opportunity.risk_score:.2f}</p>
-                <h3>Price Details:</h3>
-                <ul>
-                    <li>Buy from {target_price.marketplace.name} at {target_price.currency} {target_price.price:.2f}</li>
-                    <li>Sell on {source_price.marketplace.name} at {source_price.currency} {source_price.price:.2f}</li>
-                </ul>
-                <p><strong>Expires:</strong> {opportunity.expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
-                <p><a href="{target_price.url}">View Buy Listing</a> | <a href="{source_price.url}">View Sell Listing</a></p>
-            </body>
-        </html>
-        """
+        try:
+            source_price = opportunity.source_price
+            target_price = opportunity.target_price
+            
+            # Safely access attributes
+            product_name = source_price.product.name if source_price and source_price.product else "Unknown Product"
+            
+            # Source marketplace info
+            source_marketplace_name = source_price.marketplace.name if source_price and source_price.marketplace else "Unknown Marketplace"
+            source_currency = source_price.currency if source_price else "EUR"
+            source_price_amount = source_price.price if source_price else 0.0
+            source_url = source_price.url if source_price else "#"
+            
+            # Target marketplace info
+            target_marketplace_name = target_price.marketplace.name if target_price and target_price.marketplace else "Unknown Marketplace"
+            target_currency = target_price.currency if target_price else "EUR"
+            target_price_amount = target_price.price if target_price else 0.0
+            target_url = target_price.url if target_price else "#"
+            
+            return f"""
+            <html>
+                <body>
+                    <h2>New Arbitrage Opportunity Detected</h2>
+                    <p><strong>Product:</strong> {product_name}</p>
+                    <p><strong>Profit Margin:</strong> {opportunity.profit_margin:.2f}%</p>
+                    <p><strong>Absolute Profit:</strong> ${opportunity.absolute_profit:.2f}</p>
+                    <p><strong>Risk Score:</strong> {opportunity.risk_score:.2f}</p>
+                    <h3>Price Details:</h3>
+                    <ul>
+                        <li>Buy from {target_marketplace_name} at {target_currency} {target_price_amount:.2f}</li>
+                        <li>Sell on {source_marketplace_name} at {source_currency} {source_price_amount:.2f}</li>
+                    </ul>
+                    <p><strong>Expires:</strong> {opportunity.expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+                    <p><a href="{target_url}">View Buy Listing</a> | <a href="{source_url}">View Sell Listing</a></p>
+                </body>
+            </html>
+            """
+        except Exception as e:
+            self.logger.error(f"Error creating HTML notification: {str(e)}")
+            return "<html><body><p>Error creating opportunity details. Please check the dashboard.</p></body></html>"
 
     def _create_opportunity_text(self, opportunity: ArbitrageOpportunity) -> str:
         """Create text content for Telegram notification"""
-        source_price = opportunity.source_price
-        target_price = opportunity.target_price
-        
-        return f"""
+        try:
+            source_price = opportunity.source_price
+            target_price = opportunity.target_price
+            
+            # Safely access attributes
+            product_name = source_price.product.name if source_price and source_price.product else "Unknown Product"
+            
+            # Source marketplace info
+            source_marketplace_name = source_price.marketplace.name if source_price and source_price.marketplace else "Unknown Marketplace"
+            source_currency = source_price.currency if source_price else "EUR"
+            source_price_amount = source_price.price if source_price else 0.0
+            source_url = source_price.url if source_price else "#"
+            
+            # Target marketplace info
+            target_marketplace_name = target_price.marketplace.name if target_price and target_price.marketplace else "Unknown Marketplace"
+            target_currency = target_price.currency if target_price else "EUR"
+            target_price_amount = target_price.price if target_price else 0.0
+            target_url = target_price.url if target_price else "#"
+            
+            return f"""
 🎮 <b>New Arbitrage Opportunity</b>
 
-Product: {source_price.product.name}
+Product: {product_name}
 Profit Margin: {opportunity.profit_margin:.2f}%
 Absolute Profit: ${opportunity.absolute_profit:.2f}
 Risk Score: {opportunity.risk_score:.2f}
 
-💰 Buy from {target_price.marketplace.name}
-Price: {target_price.currency} {target_price.price:.2f}
-{target_price.url}
+💰 Buy from {target_marketplace_name}
+Price: {target_currency} {target_price_amount:.2f}
+{target_url}
 
-📈 Sell on {source_price.marketplace.name}
-Price: {source_price.currency} {source_price.price:.2f}
-{source_price.url}
+📈 Sell on {source_marketplace_name}
+Price: {source_currency} {source_price_amount:.2f}
+{source_url}
 
 ⏰ Expires: {opportunity.expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
-        """
+            """
+        except Exception as e:
+            self.logger.error(f"Error creating text notification: {str(e)}")
+            return "Error creating opportunity details. Please check the dashboard."
 
     def _create_discord_embed(self, opportunity: ArbitrageOpportunity) -> Dict[str, Any]:
         """Create Discord embed for webhook"""
-        source_price = opportunity.source_price
-        target_price = opportunity.target_price
-        
-        return {
-            "embeds": [{
-                "title": "New Arbitrage Opportunity",
-                "description": f"Product: {source_price.product.name}",
-                "color": 3066993,  # Green color
-                "fields": [
-                    {
-                        "name": "Profit Details",
-                        "value": f"Margin: {opportunity.profit_margin:.2f}%\nProfit: ${opportunity.absolute_profit:.2f}\nRisk Score: {opportunity.risk_score:.2f}",
-                        "inline": False
+        try:
+            source_price = opportunity.source_price
+            target_price = opportunity.target_price
+            
+            # Safely access attributes
+            product_name = source_price.product.name if source_price and source_price.product else "Unknown Product"
+            
+            # Source marketplace info
+            source_marketplace_name = source_price.marketplace.name if source_price and source_price.marketplace else "Unknown Marketplace"
+            source_currency = source_price.currency if source_price else "EUR"
+            source_price_amount = source_price.price if source_price else 0.0
+            source_url = source_price.url if source_price else "#"
+            
+            # Target marketplace info
+            target_marketplace_name = target_price.marketplace.name if target_price and target_price.marketplace else "Unknown Marketplace"
+            target_currency = target_price.currency if target_price else "EUR"
+            target_price_amount = target_price.price if target_price else 0.0
+            target_url = target_price.url if target_price else "#"
+            
+            return {
+                "embeds": [{
+                    "title": "New Arbitrage Opportunity",
+                    "description": f"Product: {product_name}",
+                    "color": 3066993,  # Green color
+                    "fields": [
+                        {
+                            "name": "Profit Details",
+                            "value": f"Margin: {opportunity.profit_margin:.2f}%\nProfit: ${opportunity.absolute_profit:.2f}\nRisk Score: {opportunity.risk_score:.2f}",
+                            "inline": False
+                        },
+                        {
+                            "name": "Buy Details",
+                            "value": f"Marketplace: {target_marketplace_name}\nPrice: {target_currency} {target_price_amount:.2f}\n[View Listing]({target_url})",
+                            "inline": True
+                        },
+                        {
+                            "name": "Sell Details",
+                            "value": f"Marketplace: {source_marketplace_name}\nPrice: {source_currency} {source_price_amount:.2f}\n[View Listing]({source_url})",
+                            "inline": True
+                        }
+                    ],
+                    "footer": {
+                        "text": f"Expires at {opportunity.expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
                     },
-                    {
-                        "name": "Buy Details",
-                        "value": f"Marketplace: {target_price.marketplace.name}\nPrice: {target_price.currency} {target_price.price:.2f}\n[View Listing]({target_price.url})",
-                        "inline": True
-                    },
-                    {
-                        "name": "Sell Details",
-                        "value": f"Marketplace: {source_price.marketplace.name}\nPrice: {source_price.currency} {source_price.price:.2f}\n[View Listing]({source_price.url})",
-                        "inline": True
-                    }
-                ],
-                "footer": {
-                    "text": f"Expires at {opportunity.expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
-                },
-                "timestamp": datetime.utcnow().isoformat()
-            }]
-        }
+                    "timestamp": datetime.utcnow().isoformat()
+                }]
+            }
+        except Exception as e:
+            self.logger.error(f"Error creating Discord embed: {str(e)}")
+            return {
+                "embeds": [{
+                    "title": "Arbitrage Opportunity Error",
+                    "description": "Error creating opportunity details. Please check the dashboard.",
+                    "color": 15158332  # Red color
+                }]
+            }
 
     def _log_notification(self, opportunity_id: int, channel: str, status: str, error_message: str = None):
         """Log notification attempt to database"""

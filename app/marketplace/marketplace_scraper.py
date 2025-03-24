@@ -40,7 +40,7 @@ class MarketplaceScraper(ABC):
         """Get the current price for a product"""
         pass
 
-    def _make_request(self, url, method='get', data=None, headers=None, use_playwright=False):
+    def _make_request(self, url, method='get', data=None, headers=None, params=None, use_playwright=False):
         """Make an HTTP request with retry logic and optional JavaScript rendering"""
         for attempt in range(SCRAPING_CONFIG['max_retries']):
             try:
@@ -51,6 +51,7 @@ class MarketplaceScraper(ABC):
                         url,
                         data=data,
                         headers=headers,
+                        params=params,
                         timeout=SCRAPING_CONFIG['timeout']
                     )
                     response.raise_for_status()

@@ -23,7 +23,8 @@ FLASK_CONFIG = {
 }
 
 # Currency configuration
-BASE_CURRENCY = os.getenv('BASE_CURRENCY', 'USD')
+BASE_CURRENCY = os.getenv('BASE_CURRENCY', 'EUR')
+SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'AUD', 'CAD']
 
 # Arbitrage configuration
 ARBITRAGE_CONFIG = {

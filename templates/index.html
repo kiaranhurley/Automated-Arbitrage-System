@@ -81,8 +81,13 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Filters</h5>
-                        <div class="row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Filters</h5>
+                            <button id="refresh-btn" class="btn btn-primary">
+                                <i class="fa fa-refresh"></i> Refresh Data
+                            </button>
+                        </div>
+                        <div class="row mt-3">
                             <div class="col-md-3">
                                 <label for="min-profit" class="form-label">Min Profit ($)</label>
                                 <input type="number" class="form-control" id="min-profit" min="0">
@@ -171,10 +176,23 @@
         });
 
         // Function to format currency
-        function formatCurrency(amount, currency = 'USD') {
-            return new Intl.NumberFormat('en-US', {
+        function formatCurrency(amount, currency = 'EUR') {
+            // Check for special value -1, which indicates N/A
+            if (amount === -1) {
+                return "N/A";
+            }
+            
+            // If the currency is USD, convert to EUR (approximate conversion)
+            if (currency === 'USD') {
+                // Convert USD to EUR (approximate rate, can be adjusted as needed)
+                amount = amount * 0.93;
+                currency = 'EUR';
+            }
+            
+            // Always display in EUR for consistency in the dashboard
+            return new Intl.NumberFormat('de-DE', {
                 style: 'currency',
-                currency: currency
+                currency: 'EUR'
             }).format(amount);
         }
 
@@ -202,10 +220,19 @@
 
             // Fill in the data
             card.querySelector('.product-name').textContent = opportunity.product_name;
+            
+            // IMPORTANT: The API response has source/target reversed from how we want to display
+            // Source has higher price (where we sell), Target has lower price (where we buy)
+            
+            // Buy From - Use the target marketplace (lower price)
             card.querySelector('.target-marketplace').textContent = opportunity.target_marketplace;
+            card.querySelector('.target-price').textContent = formatCurrency(opportunity.target_price.amount);
+            
+            // Sell On - Use the source marketplace (higher price)
             card.querySelector('.source-marketplace').textContent = opportunity.source_marketplace;
-            card.querySelector('.target-price').textContent = formatCurrency(opportunity.target_price.amount, opportunity.target_price.currency);
-            card.querySelector('.source-price').textContent = formatCurrency(opportunity.source_price.amount, opportunity.source_price.currency);
+            card.querySelector('.source-price').textContent = formatCurrency(opportunity.source_price.amount);
+            
+            // Display profit and margin
             card.querySelector('.absolute-profit').textContent = formatCurrency(opportunity.absolute_profit);
             card.querySelector('.profit-margin').textContent = opportunity.profit_margin.toFixed(2) + '%';
             card.querySelector('.expires-at').textContent = formatDate(opportunity.expires_at);
@@ -229,6 +256,17 @@
                 opp.profit_margin >= minMargin &&
                 opp.risk_score <= maxRisk
             );
+
+            // Remove duplicates - keep only the highest profit opportunity for each product
+            const uniqueOpps = {};
+            filtered.forEach(opp => {
+                const productKey = `${opp.product_name}_${opp.source_marketplace}_${opp.target_marketplace}`;
+                if (!uniqueOpps[productKey] || opp.absolute_profit > uniqueOpps[productKey].absolute_profit) {
+                    uniqueOpps[productKey] = opp;
+                }
+            });
+            
+            filtered = Object.values(uniqueOpps);
 
             // Sort opportunities
             filtered.sort((a, b) => {
@@ -260,6 +298,29 @@
                 });
         }
 
+        // Function to refresh all data
+        function refreshData() {
+            // Show loading state on button
+            const refreshBtn = document.getElementById('refresh-btn');
+            const originalContent = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fa fa-spin fa-spinner"></i> Loading...';
+            refreshBtn.disabled = true;
+            
+            // Fetch opportunities
+            fetch('/api/opportunities')
+                .then(response => response.json())
+                .then(data => {
+                    opportunities = data;
+                    updateOpportunities();
+                    updateStatistics();
+                })
+                .finally(() => {
+                    // Restore button state
+                    refreshBtn.innerHTML = originalContent;
+                    refreshBtn.disabled = false;
+                });
+        }
+
         // Initial load of opportunities
         fetch('/api/opportunities')
             .then(response => response.json())
@@ -277,6 +338,9 @@
         document.getElementById('min-margin').addEventListener('change', updateOpportunities);
         document.getElementById('max-risk').addEventListener('change', updateOpportunities);
         document.getElementById('sort-by').addEventListener('change', updateOpportunities);
+        
+        // Add event listener for refresh button
+        document.getElementById('refresh-btn').addEventListener('click', refreshData);
     </script>
 </body>
 </html> 
