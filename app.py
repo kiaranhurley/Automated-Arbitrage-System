@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import joinedload, sessionmaker
 
 from app.core.arbitrage_detector import FREE_TO_PLAY_CACHE, ArbitrageDetector
+from app.marketplace.gog_scraper import GOGScraper
 from app.marketplace.steam_scraper import SteamScraper
 from app.models.models import (ArbitrageOpportunity, Marketplace, PricePoint,
                                Product, init_db)
@@ -107,7 +108,23 @@ async def monitor_prices():
             session.commit()
             epic_marketplace = session.query(Marketplace).filter_by(name="Epic Games").first()
         
+        # Check if GOG marketplace exists, create if not
+        gog_marketplace = session.query(Marketplace).filter_by(name="GOG").first()
+        if not gog_marketplace:
+            logger.info("Creating GOG marketplace record")
+            gog_marketplace = Marketplace(
+                name="GOG",
+                base_url="https://www.gog.com",
+                api_enabled=False,
+                scraping_enabled=True,
+                active=True
+            )
+            session.add(gog_marketplace)
+            session.commit()
+            gog_marketplace = session.query(Marketplace).filter_by(name="GOG").first()
+        
         steam_scraper = SteamScraper(steam_marketplace.id)
+        gog_scraper = GOGScraper(gog_marketplace.id)
         arbitrage_detector = ArbitrageDetector(session)
         notification_system = NotificationSystem(session)
         
@@ -248,6 +265,37 @@ async def monitor_prices():
                     new_price_count += 1
                 else:
                     logger.warning(f"No price data found for {product.name}")
+                
+                # Add GOG prices
+                try:
+                    # Try to get GOG price using product name
+                    product_name = product.name
+                    gog_price_data = gog_scraper.get_price(product_name, region='EU')
+                    
+                    if gog_price_data:
+                        if gog_price_data.get('is_free', False):
+                            logger.info(f"Skipping free GOG game: {product.name}")
+                            # Add to free game cache
+                            FREE_TO_PLAY_CACHE[product.id] = True
+                            continue
+                            
+                        gog_price_point = PricePoint(
+                            product_id=product.id,
+                            marketplace_id=gog_marketplace.id,
+                            price=gog_price_data['price'],
+                            currency=gog_price_data['currency'],
+                            converted_price=gog_price_data['price'],  # Already in EUR
+                            region='EU',
+                            url=f"https://www.gog.com/en/game/{product.name.lower().replace(' ', '_')}",
+                            timestamp=datetime.utcnow()
+                        )
+                        
+                        session.add(gog_price_point)
+                        new_price_count += 1
+                        logger.info(f"Added GOG price for {product.name}: {gog_price_data['currency']} {gog_price_data['price']}")
+                    
+                except Exception as e:
+                    logger.error(f"Error getting GOG price for {product.name}: {str(e)}")
                 
                 # Avoid rate limiting
                 await asyncio.sleep(0.5)
